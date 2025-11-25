@@ -6,190 +6,98 @@ import pyautogui
 
 from pynput import mouse, keyboard
 
-# 棋盘起始位置
-BOARD_START_X = 915  # 左上角X坐标
-BOARD_START_Y = 390  # 左上角Y坐标
-
-# 1130 - 915
-CARD_SIZE = 215  # 卡片大小（正方形）
-GRID_ROWS = 4  # 行数
-GRID_COLS = 4  # 列数
-
-# 1145 - 915
-# 卡片之间的间距
-CARD_STRIDE = 230  # 卡片间距（包含大小）
-
-# 翻牌等待时间（秒）
-FLIP_DELAY = 0.5
+from ImageGrid import ImageGrid
+from settings import cfg
 
 
+# ================ 原主类 ========t========
 class ReplicateHelper:
     def __init__(self):
-        self.is_listening = False  # 默认不启动，按下T开启
-        self.ui_cards = {}  # 存储UI上的Label组件 (row, col): label
-        self.card_images = {}  # 存储卡片的图像对象
+        self.is_listening = False
 
-        # --- GUI 初始化 ---
+        # GUI
         self.root = tk.Tk()
         self.root.title("Replicate 游戏助手")
-        self.root.attributes('-topmost', True)  # 置顶
+        self.root.attributes('-topmost', True)
+        win_size_x = int(cfg.CARD_SIZE_X * cfg.GRID_COLS * cfg.DISP_SCALE)
+        win_size_y = int(cfg.CARD_SIZE_Y * cfg.GRID_ROWS* cfg.DISP_SCALE)
+        self.root.geometry(f"{win_size_x + 40}x{win_size_y + 80}")
 
-        # 计算窗口大小和初始位置
-        self.display_scale = 0.8
-        win_w = int(CARD_SIZE * GRID_COLS * self.display_scale)
-        win_h = int(CARD_SIZE * GRID_ROWS * self.display_scale)
-        self.root.geometry(f"{win_w + 40}x{win_h + 80}")
-
-        # 状态标签
-        self.status_var = tk.StringVar()
-        self.status_var.set("按 'T' 开始监听 | 按 'Y' 重置 | 游戏内左键翻牌")
-        self.status_label = tk.Label(
-            self.root,
-            textvariable=self.status_var,
-            fg="blue",
-            font=("Arial", 10, "bold")
-        )
+        self.status_var = tk.StringVar(value="按 'T' 开始监听 | 按 'Y' 重置 | 游戏内左键翻牌")
+        self.status_label = tk.Label(self.root, textvariable=self.status_var, fg="blue", font=("Arial", 10, "bold"))
         self.status_label.pack(pady=5)
 
-        # 卡片容器
-        self.grid_frame = tk.Frame(self.root)
-        self.grid_frame.pack()
+        # 网格控件
+        disp_sz = (int(cfg.CARD_SIZE_X * cfg.DISP_SCALE),int(cfg.CARD_SIZE_Y * cfg.DISP_SCALE))
+        self.grid = ImageGrid(self.root, rows=cfg.GRID_ROWS, cols=cfg.GRID_COLS, size=disp_sz)
+        self.grid.widget().pack()
 
-        # 初始化4x4网格
-        self.init_grid_ui()
+        # 监听
+        mouse.Listener(on_click=self.on_click).start()
+        keyboard.Listener(on_press=self.on_press).start()
 
-        # --- 鼠标监听 ---
-        self.mouse_listener = mouse.Listener(on_click=self.on_click)
-        self.mouse_listener.start()
-
-        # 键盘监听
-        self.key_listener = keyboard.Listener(on_press=self.on_press)
-        self.key_listener.start()
-
-    def init_grid_ui(self):
-        """初始化网格UI组件"""
-        # 计算显示用的卡片大小
-        disp_size = int(CARD_SIZE * self.display_scale)
-
-        # 创建一个默认的灰色图像
-        placeholder = Image.new('RGB', (disp_size, disp_size), color="#cccccc")
-        self.default_img = ImageTk.PhotoImage(placeholder)
-
-        # 生成4x4网格的卡片
-        for r in range(GRID_ROWS):
-            for c in range(GRID_COLS):
-                lbl = tk.Label(
-                    self.grid_frame,
-                    image=self.default_img,
-                    borderwidth=2,
-                    relief="solid",
-                    padx=2,
-                    pady=2
-                )
-                lbl.grid(row=r, column=c, padx=2, pady=2)
-                self.ui_cards[(r, c)] = lbl
-
+    # ---------- 键盘 ----------
     def on_press(self, key):
-        """键盘按键事件处理"""
         try:
             if hasattr(key, 'char'):
-                # 按T键切换监听状态
                 if key.char == 't':
                     self.is_listening = not self.is_listening
-                    if self.is_listening:
-                        state = "监听中（左击翻牌，右键标记）"
-                        color = "green"
-                    else:
-                        state = "已暂停（按T启动）"
-                        color = "red"
-                    self.root.after(0, lambda: self.status_label_update(state, color))
-
-                # 按Y键重置所有卡片
+                    txt, color = (("监听中", "green") if self.is_listening else ("已暂停", "red"))
+                    self.root.after(0, lambda: self.status_var.set(txt) or self.status_label.config(fg=color))
                 elif key.char == 'y':
-                    self.root.after(0, self.reset_all)
+                    self.root.after(0, self.grid.reset_all)
+                elif key.char == 'p':  # ← 新增
+                    new_profile_name = cfg.next()
+                    # 实时更新网格 & 状态提示
+                    self.root.after(0, self.rebuild_grid)
+                    self.root.after(0, lambda: self.status_var.set(f"已切换到配置 {new_profile_name}"))
         except Exception as e:
-            print(f"按键处理错误: {e}")
+            print(e)
 
-    def status_label_update(self, text, color):
-        """更新状态标签文本和颜色"""
-        self.status_var.set(text)
-        self.status_label.config(fg=color)
+    def rebuild_grid(self):
+        # 1. 记录当前窗口位置
+        geom = self.root.winfo_geometry()  # 例如 "300x200+1000+500"
+        # 2. 销毁旧网格
+        self.grid.widget().destroy()
+        # 3. 重新计算期望尺寸
+        # disp_sz = int(cfg.CARD_SIZE_X * cfg.DISP_SCALE)
+        disp_sz = (int(cfg.CARD_SIZE_X * cfg.DISP_SCALE),int(cfg.CARD_SIZE_Y * cfg.DISP_SCALE))
 
-    def reset_all(self):
-        """重置所有卡片显示"""
-        for key in self.ui_cards:
-            self.ui_cards[key].config(image=self.default_img)
-        self.card_images.clear()
-        print("已重置所有卡片")
+        win_w = disp_sz * cfg.GRID_COLS + 40  # 左右边距
+        win_h = disp_sz * cfg.GRID_ROWS + 80  # 上下边距（含状态栏）
+        # 4. 实例化新网格
+        self.grid = ImageGrid(self.root, rows=cfg.GRID_ROWS, cols=cfg.GRID_COLS, size=disp_sz)
+        self.grid.widget().pack()
+        # 5. 立即调整窗口大小并放回原来位置
+        self.root.geometry(f"{win_w}x{win_h}+{geom.split('+')[1]}+{geom.split('+')[2]}")
 
-    def clear_slot(self, row, col):
-        """清除指定位置的卡片显示"""
-        if (row, col) in self.ui_cards:
-            self.ui_cards[(row, col)].config(image=self.default_img)
-
+    # ---------- 鼠标 ----------
     def on_click(self, x, y, button, pressed):
-        """鼠标点击事件处理"""
-        # 只处理按下状态且处于监听模式
-        if not pressed or not self.is_listening:
-            return
+        if not (pressed and self.is_listening): return
+        if x < cfg.BOARD_START_X or y < cfg.BOARD_START_Y: return
 
-        # 判断点击是否在棋盘区域内
-        if x < BOARD_START_X or y < BOARD_START_Y:
-            return
+        # 获取格子坐标
+        c = int((x - cfg.BOARD_START_X) / cfg.CARD_STRIDE_X)
+        r = int((y - cfg.BOARD_START_Y) / cfg.CARD_STRIDE_Y)
+        if not (0 <= c < cfg.GRID_COLS and 0 <= r < cfg.GRID_ROWS): return
 
-        # 计算相对棋盘的坐标
-        rel_x = x - BOARD_START_X
-        rel_y = y - BOARD_START_Y
+        if button == mouse.Button.left:
+            threading.Thread(target=self.process_capture, args=(r, c)).start()
+        elif button == mouse.Button.right:
+            self.root.after(0, lambda: self.grid.clear_image(r, c))
 
-        # 计算点击的行列索引
-        col = int(rel_x / CARD_STRIDE)
-        row = int(rel_y / CARD_STRIDE)
+    # ---------- 截图 ----------
+    def process_capture(self, r, c):
+        time.sleep(cfg.FLIP_DELAY)
+        x = cfg.CAPTURE_START_X + c * cfg.CARD_STRIDE_X
+        y = cfg.CAPTURE_START_Y + r * cfg.CARD_STRIDE_Y
+        img = pyautogui.screenshot(region=(x, y, cfg.CAPTURE_CARD_SIZE_X, cfg.CAPTURE_CARD_SIZE_Y))
+        self.root.after(0, lambda: self.grid.set_image(r, c, img))
 
-        # 检查行列是否在有效范围内
-        if 0 <= col < GRID_COLS and 0 <= row < GRID_ROWS:
-            # 左键点击：处理卡片截图
-            if button == mouse.Button.left:
-                # 启动线程处理截图（避免UI卡顿）
-                threading.Thread(target=self.process_capture, args=(row, col)).start()
-            # 右键点击：清除指定位置卡片
-            elif button == mouse.Button.right:
-                self.root.after(0, lambda: self.clear_slot(row, col))
-
-    def process_capture(self, row, col):
-        """处理卡片截图并更新UI"""
-        # 等待翻牌动画完成
-        time.sleep(FLIP_DELAY)
-
-        # 计算卡片左上角坐标
-        cell_x = BOARD_START_X + col * CARD_STRIDE
-        cell_y = BOARD_START_Y + row * CARD_STRIDE
-
-        # 截取卡片区域图像
-        region = (cell_x, cell_y, CARD_SIZE, CARD_SIZE)
-        shot = pyautogui.screenshot(region=region)
-
-        # 调整图像大小以适应UI显示
-        disp_size = int(CARD_SIZE * self.display_scale)
-        shot_resized = shot.resize((disp_size, disp_size), Image.Resampling.LANCZOS)
-
-        # 在UI线程中更新卡片显示
-        self.root.after(0, lambda: self.update_slot(row, col, shot_resized))
-
-    def update_slot(self, row, col, image):
-        """更新指定位置的卡片图像"""
-        # 转换为Tkinter可用的图像格式
-        tk_img = ImageTk.PhotoImage(image)
-        self.card_images[(row, col)] = tk_img  # 保持引用避免被回收
-
-        # 更新UI显示
-        if (row, col) in self.ui_cards:
-            self.ui_cards[(row, col)].config(image=tk_img)
-
+    # ---------- 主循环 ----------
     def run(self):
-        """启动主循环"""
         self.root.mainloop()
 
 
 if __name__ == "__main__":
-    app = ReplicateHelper()
-    app.run()
+    ReplicateHelper().run()

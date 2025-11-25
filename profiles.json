@@ -1,0 +1,31 @@
+{
+  "勇者翻翻看": {
+    "BOARD_START_X": 603,
+    "BOARD_START_Y": 460,
+    "CARD_SIZE": 300,
+    "GRID_ROWS": 4,
+    "GRID_COLS": 5,
+    "CARD_STRIDE": 230,
+    "DISP_SCALE": 0.5
+  },
+  "双喵成行4*4": {
+    "BOARD_START_X": 915,
+    "BOARD_START_Y": 390,
+    "CARD_SIZE_X": 215,
+    "CARD_SIZE_Y": 215,
+    "GRID_ROWS": 4,
+    "GRID_COLS": 4,
+    "CARD_STRIDE": 230,
+    "DISP_SCALE": 0.7
+  },
+  "双喵成行4*5": {
+    "BOARD_START_X": 800,
+    "BOARD_START_Y": 390,
+    "CARD_SIZE_X": 215,
+    "CARD_SIZE_Y": 215,
+    "GRID_ROWS": 4,
+    "GRID_COLS": 5,
+    "CARD_STRIDE": 230,
+    "DISP_SCALE": 0.5
+  }
+}

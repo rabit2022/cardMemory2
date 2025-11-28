@@ -1,31 +1,92 @@
 {
-  "勇者翻翻看": {
-    "BOARD_START_X": 603,
-    "BOARD_START_Y": 460,
-    "CARD_SIZE": 300,
-    "GRID_ROWS": 4,
-    "GRID_COLS": 5,
-    "CARD_STRIDE": 230,
-    "DISP_SCALE": 0.5
-  },
   "双喵成行4*4": {
-    "BOARD_START_X": 915,
-    "BOARD_START_Y": 390,
-    "CARD_SIZE_X": 215,
-    "CARD_SIZE_Y": 215,
+    "TOP_LEFT": [
+      915,
+      397
+    ],
+    "RIGHT_BOTTOM": [
+      1127,
+      610
+    ],
+    "NEXT_CARD_TOP_LEFT": [
+      1144,
+      625
+    ],
+    "CAPTURE_TOP_LEFT": [
+      915,
+      397
+    ],
+    "CAPTURE_RIGHT_BOTTOM": [
+      1127,
+      610
+    ],
+    "NEXT_CARD_CAPTURE_TOP_LEFT": [
+      1144,
+      625
+    ],
     "GRID_ROWS": 4,
     "GRID_COLS": 4,
-    "CARD_STRIDE": 230,
-    "DISP_SCALE": 0.7
+    "DISP_SCALE": 0.7,
+    "FLIP_DELAY": 0.5
   },
   "双喵成行4*5": {
-    "BOARD_START_X": 800,
-    "BOARD_START_Y": 390,
-    "CARD_SIZE_X": 215,
-    "CARD_SIZE_Y": 215,
+    "TOP_LEFT": [
+      915,
+      397
+    ],
+    "RIGHT_BOTTOM": [
+      1127,
+      610
+    ],
+    "NEXT_CARD_TOP_LEFT": [
+      1144,
+      625
+    ],
+    "CAPTURE_TOP_LEFT": [
+      915,
+      397
+    ],
+    "CAPTURE_RIGHT_BOTTOM": [
+      1127,
+      610
+    ],
+    "NEXT_CARD_CAPTURE_TOP_LEFT": [
+      1144,
+      625
+    ],
     "GRID_ROWS": 4,
     "GRID_COLS": 5,
-    "CARD_STRIDE": 230,
-    "DISP_SCALE": 0.5
+    "DISP_SCALE": 0.5,
+    "FLIP_DELAY": 0.5
+  },
+  "勇者翻翻看": {
+    "TOP_LEFT": [
+      597,
+      460
+    ],
+    "RIGHT_BOTTOM": [
+      795,
+      726
+    ],
+    "NEXT_CARD_TOP_LEFT": [
+      832,
+      786
+    ],
+    "CAPTURE_TOP_LEFT": [
+      565,
+      363
+    ],
+    "CAPTURE_RIGHT_BOTTOM": [
+      830,
+      752
+    ],
+    "NEXT_CARD_CAPTURE_TOP_LEFT": [
+      798,
+      689
+    ],
+    "GRID_ROWS": 3,
+    "GRID_COLS": 6,
+    "DISP_SCALE": 0.5,
+    "FLIP_DELAY": 0.5
   }
 }

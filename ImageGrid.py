@@ -11,14 +11,16 @@
 from PIL import Image, ImageTk
 import tkinter as tk
 
+from defined.Point import Point
+
 
 class ImageGrid:
     """4×4 可拖动换位的图像网格"""
-    def __init__(self, parent, *, rows=4, cols=4, size=(128,128)):
+    def __init__(self, parent, *, rows=4, cols=4, size=Point(128,128)):
         self.rows, self.cols = rows, cols
         self.size = size
         self.default_img = ImageTk.PhotoImage(
-            Image.new("RGB", size, "#cccccc")
+            Image.new("RGB", size.tuple(), "#cccccc")
         )
 
         # 数据
@@ -61,11 +63,11 @@ class ImageGrid:
         self.drag_src = (r, c)
 
         # 创建顶层 Canvas 做跟随鼠标的小图
-        self.drag_canvas = tk.Canvas(self.frame, width=self.size[0], height=self.size[1],
+        self.drag_canvas = tk.Canvas(self.frame, width=self.size.x, height=self.size.y,
                                      highlightthickness=0, bd=0)
         # 半透明处理：PIL 生成 50% 透明度缩略图
         pil_copy = self._pil_from_tk(self.tk_imgs[(r, c)]).copy()
-        pil_copy = pil_copy.resize((int(self.size[0] * 0.8), int(self.size[1] * 0.8)))
+        pil_copy = pil_copy.resize((int(self.size.x * 0.8), int(self.size.y * 0.8)))
         pil_copy = self._set_alpha(pil_copy, 128)
         self.drag_photo = ImageTk.PhotoImage(pil_copy)
         self.drag_canvas.create_image(0, 0, anchor="nw", image=self.drag_photo)
@@ -76,8 +78,8 @@ class ImageGrid:
         """鼠标移动：让预览图跟随"""
         if self.drag_canvas is None:
             return
-        x = event.x_root - self.frame.winfo_rootx() - self.size[0] // 2
-        y = event.y_root - self.frame.winfo_rooty() - self.size[1] // 2
+        x = event.x_root - self.frame.winfo_rootx() - self.size.x // 2
+        y = event.y_root - self.frame.winfo_rooty() - self.size.y // 2
         self.drag_canvas.place(x=x, y=y)
 
     def _end_drag(self, event):
@@ -92,8 +94,8 @@ class ImageGrid:
         # 计算目标行列（相对于 grid 框架）
         x = event.x_root - self.frame.winfo_rootx()
         y = event.y_root - self.frame.winfo_rooty()
-        c = x // (self.size[0] + 4)  # padx=2 所以 +4
-        r = y // (self.size[1] + 4)
+        c = x // (self.size.x + 4)  # padx=2 所以 +4
+        r = y // (self.size.y + 4)
         if not (0 <= c < self.cols and 0 <= r < self.rows):
             return
         if (r, c) == self.drag_src:
